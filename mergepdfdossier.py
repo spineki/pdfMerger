@@ -1,48 +1,69 @@
 import subprocess
 import os
-
-# SI TU VEUX MODIFIER UN TRUC, C EST SEULEMENT LE NOM DU FICHIER FINAL, VARIABLE DOCFINAL
-# NE TOUCHE A RIEN D AUTRE!!
-#-------------------------------------------------------------------------------------------------
-doc_final = "sortie.pdf" # nom document final, le changer si nécessaire
-# ------------------------------------------------------------------------------------------------
-
-template = """ gswin64 -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile={0}"""
-
-path = input("entre le dossier contenant le pdf (il seront fusionnés par ordre alphabétique):")
-
-liste_doc_a_fusionner = os.listdir(path)
-liste_doc_a_fusionner = [os.path.join(path,doc) for doc in liste_doc_a_fusionner if len(doc)>4 and doc[-3:] == "pdf"]
-liste_doc_a_fusionner = sorted(liste_doc_a_fusionner)
-print("\n\n\n" , "*" * 20,"\n",  "fichier trouvés, fusionnés dans cet ordre:")
-for doc in liste_doc_a_fusionner:
-	print(doc)
+import shutil
 
 
-doc_final = os.path.join(path, doc_final)
+def cmd_exists(cmd):
+    """
+    Function that verify if a command is usable in the current OS
+    """
+    return (shutil.which(cmd) is not None)
 
-script = template.format(doc_final)
+# FIRST: FINDING if it's a gs or gswin64 executable -----------------------------------------------
+def find_gs_name(verbose = True):
+    gs_command = ""
+    if (cmd_exists("gswin64")):
+        gs_command = "gswin64"
+    elif cmd_exists("gs"):
+        gs_command = "gs"
+    else:
+        print("No ghostscript executable found. (gs or gswin64). Please make sure to download ghostScript and include it in your PATH")
+        exit(1)
+    if verbose:
+        print(gs_command)
+    return gs_command
 
-for doc in liste_doc_a_fusionner:
-	script += " " + doc 
-print("\n\n\n" , "*" * 20,"\n")
-print("c'est parti mon kiki")
-# print("execution du script ", script)
+# CREATING THE COMMAND ----------------------------------------------------------------------------
+def create_command(directory_path,  gs_command, ouput_file = "merged_document.pdf", verbose = True):
+    """ Return the ghostScript command to merge the pdf in the folder 'directory_path'
+		needed
+	"""
+    template = """ {0} -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -dPDFSETTINGS=/prepress -sOutputFile={1}"""
+    doc_in_directory = os.listdir(directory_path)
+    pdf_in_directory = [ "\"" + os.path.join(directory_path,doc)+"\"" for doc in doc_in_directory if len(doc)>4 and doc[-3:] == "pdf"]
+    pdf_to_merge_sorted = sorted(pdf_in_directory)
+    if verbose:
+        print("*" *20, "\nPDF files found, that will be merged in the following order:")
+        for file in pdf_to_merge_sorted:
+            print(file)
+    output_path = os.path.join(directory_path, ouput_file)
+    command = template.format(gs_command, output_path) +" " + " ".join(pdf_to_merge_sorted)
+    return command
 
-p = subprocess.Popen(script, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+# EXECUTING THE COMMAND ---------------------------------------------------------------------------
+def execute_command(command, verbose = True):
+    """Execute a command, return it's value: Print ouput if verbose is True"""
+    if verbose:
+        print("Executing the command:\n", command)
 
-if p.stdout is not None:
-	for line in p.stdout.readlines():
-		print (line)
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-if p.stderr is not None:
-	for line in p.stderr.readlines():
-		print(line)
+    if verbose:
+        print("OUTPUT:\n")
+        if p.stdout is not None:
+            for line in p.stdout.readlines():
+                print(line)
 
-retval = p.wait()
+    if p.stderr is not None:
+        for line in p.stderr.readlines():
+            print(line)
 
+    retval = p.wait()
+    return retval
 
+if __name__ == '__main__':
+    gs_command = find_gs_name()
 
-
-
-input("tape sur 'entrer' pour sortir")
+    directory_path = input("enter here your directory containing pdf files")
+    command = create_command(directory_path, gs_command)
+    execute_command(command)
