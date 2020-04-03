@@ -127,7 +127,7 @@ if __name__ == '__main__':
             list_files = get_pdf_files_from_folder(args.directory, verbose=args.verbose)
             output_name = os.path.join(args.directory, args.output)
 
-        command = create_command(list_files, gs_command, ouput_file=output_name, verbose=args.verbose)
+        command = create_command(list_files, gs_command, output_path=output_name, verbose=args.verbose)
         execute_command(command, verbose=args.verbose)
     
     input("\n\nPress enter to finish!")
