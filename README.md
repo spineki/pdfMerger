@@ -40,8 +40,9 @@ python pdfMerger.py
 ```
 
 2) You will be prompted to enter the path of the directory containing the pdf files that need to be merged. Type it and press enter:
+
+:warning:
 ```
-    :warning
     Files will be merged following an alphabetical order.
     It means that the following repository:
     |-> file3.pdf
