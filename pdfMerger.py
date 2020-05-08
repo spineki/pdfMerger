@@ -15,6 +15,8 @@ def verify_directory_name():
     verif = True
     while (verif):
         directory_name = input("Enter a valid absolute directory path containing the pdf files: ")
+        directory_name = directory_name.strip()
+        directory_name = directory_name.strip("\"")
         if os.path.isdir(directory_name):
             return directory_name
         else:
@@ -26,7 +28,7 @@ def verify_output_name():
     output_name = input("Enter the name of the output file, default name is " + default + ". Just press enter to keep it")
     if len(output_name) <= 4: # no even .pdf
         return default
-    elif output_name[-3:] != "pdf": # need pdf extension
+    elif (output_name[-3:]).lower() != "pdf": # need pdf extension
         return output_name + ".pdf"
     else:
         return output_name
@@ -48,7 +50,7 @@ def find_gs_name(verbose = True):
 
 def get_pdf_files_from_folder(directory_path, verbose=True):
     doc_in_directory = os.listdir(directory_path)
-    pdf_in_directory = [ "\"" + os.path.join(directory_path,doc)+"\"" for doc in doc_in_directory if len(doc)>4 and doc[-3:] == "pdf"]
+    pdf_in_directory = [ "\"" + os.path.join(directory_path,doc)+"\"" for doc in doc_in_directory if len(doc)>4 and doc[-3:].lower() == "pdf"]
     pdf_to_merge_sorted = sorted(pdf_in_directory)
     if verbose:
         print("*" *20, "\nPDF files found, that will be merged in the following order:")
